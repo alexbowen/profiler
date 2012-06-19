@@ -1,0 +1,10 @@
+{
+  "name": "Profiler",
+  "version": "1.0",
+  "manifest_version": 2,
+  "description": "Javascript profiler with historical data using HTML5 api.",
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
+  "permissions": []
+}
