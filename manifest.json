@@ -4,7 +4,8 @@
   "manifest_version": 2,
   "description": "Javascript profiler with historical data using HTML5 api.",
   "browser_action": {
-    "default_icon": "icon.png"
+    "default_icon": "icon.png",
+    "default_popup": "main.html"
   },
   "permissions": []
 }
