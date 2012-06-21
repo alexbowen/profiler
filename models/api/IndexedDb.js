@@ -1,15 +1,26 @@
-define('profiler/models/api/indexedDb', function () {
+/**
+ * @return module:profiler/models/api/indexedDb
+ */
+ define('profiler/models/api/indexedDb', function () {
 
     /**
      * indexedDb
      * constructor
      * @param  {object} options
-     * @param  {function} onStoreReady [description]
+     * @param  {function} onStoreReady callback for db ready
      * @return {void}
      */
-    var indexedDb = function(options, onStoreReady) {
+    var indexedDbModel = function(options, onStoreReady) {
 
         /** static helper methods **/
+
+        /**
+         * normalizeConstants
+         * merges the properties of two objects
+         * @param  {object} object    [description]
+         * @param  {object} constants [description]
+         * @return {void}
+         */
         this.normalizeConstants = function(object, constants) {
             for (var prop in constants) {
                 if (!(prop in object)) {
@@ -17,7 +28,22 @@ define('profiler/models/api/indexedDb', function () {
                 }
             }
         };
+
+        /**
+         * emptyFunc
+         * an empty function
+         * @return {void}
+         */
         this.emptyFunc = function(){};
+
+        /**
+         * update
+         * copys properties from one object to another
+         * but not overwriting if it already exists.
+         * @param  {object} target
+         * @param  {object} source
+         * @return {void}
+         */
         this.update = function(target, source) {
             var name, s, empty = {};
             for(name in source){
@@ -28,17 +54,25 @@ define('profiler/models/api/indexedDb', function () {
             }
             return target;
         };
-        this.execute = function (scope, method) {
-            if (!method){ method = scope; scope = null; }
-            if (typeof method === "string") {
+
+        /**
+         * execute
+         * execute a function in scope of the specified object.
+         * @param  {object} scope
+         * @param  {function} func
+         * @return {object}
+         */
+        this.execute = function (scope, func) {
+            if (!func){ func = scope; scope = null; }
+            if (typeof func === "string") {
                 scope = scope || window;
-                if (!scope[method]) { throw(['method not found']); }
+                if (!scope[func]) { throw(['method not found']); }
                 return function() {
-                    return scope[method].apply(scope, arguments || []);
+                    return scope[func].apply(scope, arguments || []);
                 };
             }
-            return !scope ? method : function() {
-                return method.apply(scope, arguments || []);
+            return !scope ? func : function() {
+                return func.apply(scope, arguments || []);
             };
         };
 
@@ -64,7 +98,7 @@ define('profiler/models/api/indexedDb', function () {
         this.openDB();
     };
 
-    indexedDb.prototype = {
+    indexedDbModel.prototype = {
         consts: window.IDBTransaction || window.webkitIDBTransaction,
         cursor: window.IDBCursor || window.webkitIDBCursor,
         db: null,
@@ -72,14 +106,14 @@ define('profiler/models/api/indexedDb', function () {
         dbDescription: null,
         dbVersion: null,
         error : {
-            'version'        : function(error){ console.error('Failed to set version.', error); },
-            'deleteStore'    : function(error){ console.error('Failed to delete objectStore.', error); },
-            'write'            : function(error) { console.error('Could not write data.', error); },
-            'read'            : function(error) { console.error('Could not read data.', error); },
+            'version'       : function(error){ console.error('Failed to set version.', error); },
+            'deleteStore'   : function(error){ console.error('Failed to delete objectStore.', error); },
+            'write'         : function(error) { console.error('Could not write data.', error); },
+            'read'          : function(error) { console.error('Could not read data.', error); },
             'remove'        : function(error) { console.error('Could not remove data.', error); },
-            'clear'            : function(error) { console.error('Could not clear store.', error); },
-            'createIndex'    : function(error) { console.error('Could not create index.', error); },
-            'removeIndex'    : function(error) { console.error('Could not remove index.', error); },
+            'clear'         : function(error) { console.error('Could not clear store.', error); },
+            'createIndex'   : function(error) { console.error('Could not create index.', error); },
+            'removeIndex'   : function(error) { console.error('Could not remove index.', error); },
             'cursor'        : function(error) { console.error('Could not open cursor.', error); }
         },
         idb: window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB,
@@ -206,122 +240,11 @@ define('profiler/models/api/indexedDb', function () {
 
             onError = onError ? onError : this.error.version;
 
-            this.enterMutationState(this.execute(this, function(evt){
-                var db = evt.target.result, success;
+            this.enterMutationState(this.execute(this, function(event){
+                var db = event.target.result, success;
                 db.deleteObjectStore(this.storeName);
                 return !this.hasObjectStore() ? onError() : onSuccess();
             }), onError);
-        },
-
-        /* DATA MANIPULATION */
-
-        /**
-         * put
-         * @param  {[type]} dataObj   [description]
-         * @param  {function} onSuccess [description]
-         * @param  {function} onError   [description]
-         * @return {void}
-         */
-        put: function(dataObj, onSuccess, onError) {
-
-            var putTransaction, putRequest;
-
-            onError = onError ? onError : this.error.write;
-            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
-
-            if (typeof dataObj[this.keyPath] === 'undefined' && !this.features.hasAutoIncrement){
-                dataObj[this.keyPath] = this._getUID();
-            }
-
-            putTransaction = this.db.transaction([this.storeName], this.consts.READ_WRITE);
-            putRequest = putTransaction.objectStore(this.storeName).put(dataObj);
-            putRequest.onsuccess = function(event){ onSuccess(event.target.result); };
-            putRequest.onerror = onError;
-        },
-
-        /**
-         * get
-         * @param  {[type]} key       [description]
-         * @param  {function} onSuccess [description]
-         * @param  {function} onError   [description]
-         * @return {void}
-         */
-        get: function(key, onSuccess, onError) {
-
-            var getTransaction, getRequest;
-
-            onError = onError ? onError : this.error.read;
-            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
-
-            getTransaction = this.db.transaction([this.storeName], this.consts.READ_ONLY);
-            getRequest = getTransaction.objectStore(this.storeName).get(key);
-            getRequest.onsuccess = function(event){ onSuccess(event.target.result); };
-            getRequest.onerror = onError;
-        },
-
-        /**
-         * remove
-         * @param  {[type]} key       [description]
-         * @param  {function} onSuccess [description]
-         * @param  {function} onError   [description]
-         * @return {void}
-         */
-        remove: function(key, onSuccess, onError) {
-
-            var removeTransaction, deleteRequest;
-
-            onError = onError ? onError : this.error.remove;
-            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
-
-            removeTransaction = this.db.transaction([this.storeName], this.consts.READ_WRITE);
-            deleteRequest = removeTransaction.objectStore(this.storeName)['delete'](key);
-            deleteRequest.onsuccess = function(event){ onSuccess(event.target.result); };
-            deleteRequest.onerror = onError;
-        },
-
-        /**
-         * [getAll description]
-         * @param  {function} onSuccess [description]
-         * @param  {function} onError   [description]
-         * @return {void}
-         */
-        getAll: function(onSuccess, onError) {
-
-            var getAllTransaction, store;
-
-            onError = onError ? onError : this.error.read;
-            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
-
-            getAllTransaction = this.db.transaction([this.storeName], this.consts.READ_ONLY);
-
-            store = getAllTransaction.objectStore(this.storeName);
-
-            if (store.getAll){
-                var getAllRequest = store.getAll();
-                getAllRequest.onsuccess = function(event){ onSuccess(event.target.result); };
-                getAllRequest.onerror = onError;
-            } else {
-                this._getAllCursor(getAllTransaction, onSuccess, onError);
-            }
-        },
-
-        /**
-         * [clear description]
-         * @param  {function} onSuccess [description]
-         * @param  {function} onError   [description]
-         * @return {void}
-         */
-        clear: function(onSuccess, onError) {
-
-            var clearTransaction, clearRequest;
-
-            onError = onError ? onError : this.error.clear;
-            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
-
-            clearTransaction = this.db.transaction([this.storeName], this.consts.READ_WRITE);
-            clearRequest = clearTransaction.objectStore(this.storeName).clear();
-            clearRequest.onsuccess = function(event){ onSuccess(event.target.result); };
-            clearRequest.onerror = onError;
         },
 
         _getAllCursor: function(tr, onSuccess, onError) {
@@ -355,15 +278,15 @@ define('profiler/models/api/indexedDb', function () {
             onError = onError ? onError : this.error.createIndex;
 
             propertyName = propertyName ? propertyName : indexName;
-            this.enterMutationState(this.execute(this, function(evt) {
+            this.enterMutationState(this.execute(this, function(event) {
 
-                var result = evt.target.result, index;
+                var result = event.target.result, index;
 
                 if (result.objectStore){ // transaction
                     index = db.objectStore(this.storeName).createIndex(indexName, propertyName, { unique: !!isUnique });
                 } else { // db
-                    var putTransaction = result.transaction([that.storeName] /* , this.consts.READ_WRITE */ );
-                    var store = putTransaction.objectStore(that.storeName);
+                    var putTransaction = result.transaction([that.storeName] /* , this.consts.READ_WRITE */ ),
+                        store = putTransaction.objectStore(that.storeName);
                         index = store.createIndex(indexName, propertyName, { unique: !!isUnique });
                 }
                 onSuccess(index);
@@ -383,15 +306,127 @@ define('profiler/models/api/indexedDb', function () {
         },
 
         removeIndex: function(indexName, onSuccess, onError) {
+
             onSuccess = onSuccess ? onSuccess : this.emptyFunc;
             onError = onError ? onError : this.error.removeIndex;
-            this.enterMutationState(this.execute(this, function(evt){
-                evt.target.result.objectStore(this.storeName).deleteIndex(indexName);
+
+            this.enterMutationState(this.execute(this, function(event){
+                event.target.result.objectStore(this.storeName).deleteIndex(indexName);
                 onSuccess();
             }), onError);
         },
 
-        /* DB CURSOR */
+        /* DATA MANIPULATION - PUBLIC API */
+
+        /**
+         * put
+         * @param  {[type]} dataObj
+         * @param  {function} onSuccess
+         * @param  {function} onError
+         * @return {void}
+         */
+        put: function(dataObj, onSuccess, onError) {
+
+            var putTransaction, putRequest;
+
+            onError = onError ? onError : this.error.write;
+            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
+
+            if (typeof dataObj[this.keyPath] === 'undefined' && !this.features.hasAutoIncrement){
+                dataObj[this.keyPath] = this._getUID();
+            }
+
+            putTransaction = this.db.transaction([this.storeName], this.consts.READ_WRITE);
+            putRequest = putTransaction.objectStore(this.storeName).put(dataObj);
+            putRequest.onsuccess = function(event){ onSuccess(event.target.result); };
+            putRequest.onerror = onError;
+        },
+
+        /**
+         * get
+         * @param  {[type]} key
+         * @param  {function} onSuccess
+         * @param  {function} onError
+         * @return {void}
+         */
+        get: function(key, onSuccess, onError) {
+
+            var getTransaction, getRequest;
+
+            onError = onError ? onError : this.error.read;
+            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
+
+            getTransaction = this.db.transaction([this.storeName], this.consts.READ_ONLY);
+            getRequest = getTransaction.objectStore(this.storeName).get(key);
+            getRequest.onsuccess = function(event){ onSuccess(event.target.result); };
+            getRequest.onerror = onError;
+        },
+
+        /**
+         * remove
+         * @param  {[type]} key unique identifier
+         * @param  {function} onSuccess
+         * @param  {function} onError
+         * @return {void}
+         */
+        remove: function(key, onSuccess, onError) {
+
+            var removeTransaction, deleteRequest;
+
+            onError = onError ? onError : this.error.remove;
+            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
+
+            removeTransaction = this.db.transaction([this.storeName], this.consts.READ_WRITE);
+            deleteRequest = removeTransaction.objectStore(this.storeName)['delete'](key);
+            deleteRequest.onsuccess = function(event){ onSuccess(event.target.result); };
+            deleteRequest.onerror = onError;
+        },
+
+        /**
+         * getAll
+         * @param  {function} onSuccess
+         * @param  {function} onError
+         * @return {void}
+         */
+        getAll: function(onSuccess, onError) {
+
+            var getAllTransaction, store;
+
+            onError = onError ? onError : this.error.read;
+            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
+
+            getAllTransaction = this.db.transaction([this.storeName], this.consts.READ_ONLY);
+
+            store = getAllTransaction.objectStore(this.storeName);
+
+            if (store.getAll){
+                var getAllRequest = store.getAll();
+                getAllRequest.onsuccess = function(event){ onSuccess(event.target.result); };
+                getAllRequest.onerror = onError;
+            } else {
+                this._getAllCursor(getAllTransaction, onSuccess, onError);
+            }
+        },
+
+        /**
+         * clear
+         * @param  {function} onSuccess
+         * @param  {function} onError
+         * @return {void}
+         */
+        clear: function(onSuccess, onError) {
+
+            var clearTransaction, clearRequest;
+
+            onError = onError ? onError : this.error.clear;
+            onSuccess = onSuccess ? onSuccess : this.emptyFunc;
+
+            clearTransaction = this.db.transaction([this.storeName], this.consts.READ_WRITE);
+            clearRequest = clearTransaction.objectStore(this.storeName).clear();
+            clearRequest.onsuccess = function(event){ onSuccess(event.target.result); };
+            clearRequest.onerror = onError;
+        },
+
         iterate: function(callback, options) {
 
             var directionType, cursorTransaction, cursorTarget, cursorRequest;
@@ -432,13 +467,31 @@ define('profiler/models/api/indexedDb', function () {
             };
         }
     };
+
+    indexedDb = indexedDbModel;
+
+    indexedDb.instance = null;
+
+    //Ensures we always use the same instance of the object
+    indexedDb.getInstance = function () {
+        if (indexedDb.instance === null) {
+            indexedDb.instance = new indexedDbModel({
+                'dbName'        : 'IDB',
+                'storeName'     : 'Store',
+                'dbVersion'     : 1,
+                'keyPath'       : 'id',
+                'autoIncrement' : true
+            });
+        }
+
+        return indexedDb.instance;
+    };
+
+    return indexedDb.getInstance();
 });
 
-var db = new indexedDb({
-    'dbName'        : 'IDB',
-    'storeName'        : 'Store',
-    'dbVersion'        : 1,
-    'keyPath'        : 'id',
-    'autoIncrement'    : true
-}, db.put({'test' : 'dataObj'}, db.iterate(info)));
-
+require(['profiler/models/api/indexedDb'], function(indexedDb) {
+    setTimeout(function () {
+        indexedDb.put({'test' : 'dataObj'}, indexedDb.getAll(alert));
+    }, 1000);
+});
