@@ -12,16 +12,14 @@
      */
     var indexedDbModel = function(options, onStoreReady) {
 
-        /** static helper methods **/
-
         /**
          * normalizeConstants
          * merges the properties of two objects
-         * @param  {object} object    [description]
-         * @param  {object} constants [description]
+         * @param  {object} object
+         * @param  {object} constants
          * @return {void}
          */
-        this.normalizeConstants = function(object, constants) {
+        var normalizeConstants = function(object, constants) {
             for (var prop in constants) {
                 if (!(prop in object)) {
                     object[prop] = constants[prop];
@@ -29,66 +27,19 @@
             }
         };
 
-        /**
-         * emptyFunc
-         * an empty function
-         * @return {void}
-         */
-        this.emptyFunc = function(){};
-
-        /**
-         * update
-         * copys properties from one object to another
-         * but not overwriting if it already exists.
-         * @param  {object} target
-         * @param  {object} source
-         * @return {void}
-         */
-        this.update = function(target, source) {
-            var name, s, empty = {};
-            for(name in source){
-                s = source[name];
-                if (s !== empty[name] && s !== target[name]){
-                    target[name] = s;
-                }
-            }
-            return target;
-        };
-
-        /**
-         * execute
-         * execute a function in scope of the specified object.
-         * @param  {object} scope
-         * @param  {function} func
-         * @return {object}
-         */
-        this.execute = function (scope, func) {
-            if (!func){ func = scope; scope = null; }
-            if (typeof func === "string") {
-                scope = scope || window;
-                if (!scope[func]) { throw(['method not found']); }
-                return function() {
-                    return scope[func].apply(scope, arguments || []);
-                };
-            }
-            return !scope ? func : function() {
-                return func.apply(scope, arguments || []);
-            };
-        };
-
         this.update(this, options);
 
         this.onStoreReady = onStoreReady;
 
         this.consts = window.IDBTransaction || window.webkitIDBTransaction;
-        this.normalizeConstants(this.consts, {
+        normalizeConstants(this.consts, {
             'READ_ONLY'        : 'readonly',
             'READ_WRITE'    : 'readwrite',
             'VERSION_CHANGE': 'versionchange'
         });
 
         this.cursor = window.IDBCursor || window.webkitIDBCursor;
-        this.normalizeConstants(this.cursor, {
+        normalizeConstants(this.cursor, {
             'NEXT'                : 'next',
             'NEXT_NO_DUPLICATE'    : 'nextunique',
             'PREV'                : 'prev',
@@ -105,6 +56,7 @@
         dbName: null,
         dbDescription: null,
         dbVersion: null,
+        emptyFunc : function(){},
         error : {
             'version'       : function(error){ console.error('Failed to set version.', error); },
             'deleteStore'   : function(error){ console.error('Failed to delete objectStore.', error); },
@@ -123,6 +75,48 @@
         autoIncrement: null,
         features: null,
         onStoreReady: this.emptyFunc,
+
+        /** helper methods **/
+
+        /**
+         * update
+         * copys properties from one object to another
+         * but not overwriting if it already exists.
+         * @param  {object} target
+         * @param  {object} source
+         * @return {void}
+         */
+        update : function(target, source) {
+            var name, s, empty = {};
+            for(name in source){
+                s = source[name];
+                if (s !== empty[name] && s !== target[name]){
+                    target[name] = s;
+                }
+            }
+            return target;
+        },
+
+        /**
+         * execute
+         * execute a function in scope of the specified object.
+         * @param  {object} scope
+         * @param  {function} func
+         * @return {object}
+         */
+        execute : function (scope, func) {
+            if (!func){ func = scope; scope = null; }
+            if (typeof func === "string") {
+                scope = scope || window;
+                if (!scope[func]) { throw(['method not found']); }
+                return function() {
+                    return scope[func].apply(scope, arguments || []);
+                };
+            }
+            return !scope ? func : function() {
+                return func.apply(scope, arguments || []);
+            };
+        },
         openDB: function() {
 
             var that = this, features = this.features = {}, openRequest;
@@ -431,6 +425,8 @@
 
             var directionType, cursorTransaction, cursorTarget, cursorRequest;
 
+            callback = callback ? callback : this.emptyFunc;
+
             options = this.update({
                 'index'            : null,
                 'order'            : 'ASC',
@@ -468,7 +464,7 @@
         }
     };
 
-    indexedDb = indexedDbModel;
+    var indexedDb = indexedDbModel;
 
     indexedDb.instance = null;
 
@@ -487,11 +483,23 @@
         return indexedDb.instance;
     };
 
-    return indexedDb.getInstance();
+    var database = indexedDb.getInstance();
+
+    /* PUBLIC API ACCESSOR METHODS - EVERY THING ELSE IN HERE IS INVISIBLE */
+    return {
+        'put'       : function (data, onSuccess, onError) { database.put(data, onSuccess, onError); },
+        'get'       : function (key, onSuccess, onError) { database.get(key, onSuccess, onError); },
+        'remove'    : function (key, onSuccess, onError) { database.remove(key, onSuccess, onError); },
+        'getAll'    : function (onSuccess, onError) { database.getAll(onSuccess, onError); },
+        'clear'     : function (onSuccess, onError) { database.clear(onSuccess, onError); },
+        'iterate'   : function (callback, options) { database.iterate(callback, options); }
+    };
+
 });
 
 require(['profiler/models/api/indexedDb'], function(indexedDb) {
     setTimeout(function () {
         indexedDb.put({'test' : 'dataObj'}, indexedDb.getAll(alert));
-    }, 1000);
+        indexedDb.openDB(); //this should fail
+    }, 2000);
 });
