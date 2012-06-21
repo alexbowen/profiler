@@ -1,5 +1,5 @@
 {
-  "name": "Profiler",
+  "name": "profiler",
   "version": "1.0",
   "manifest_version": 2,
   "description": "Javascript profiler with historical data using HTML5 api.",

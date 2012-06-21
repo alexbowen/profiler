@@ -1,0 +1,5 @@
+content   profiler      chrome/content/
+skin      profiler  	classic/1.0 skin/
+locale    profiler  	en-US       locale/en-US/
+
+overlay chrome://browser/content/browser.xul chrome://sample/content/sample.xul
