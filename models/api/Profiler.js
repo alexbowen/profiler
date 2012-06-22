@@ -15,6 +15,34 @@ define('profiler/models/api/Chart', function () {
         },
 
         /**
+         * registerFunction
+         * @param  {string} name
+         * @param  {[type]}
+         * @return {void}
+         */
+        registerFunction: function (name, scope) {
+            YAHOO.tool.Profiler.registerFunction(name, scope);
+        },
+
+        /**
+         * getFunctionReport
+         * @param  {string} name
+         * @return {object}
+         */
+        getFunctionReport: function (name) {
+            return YAHOO.tool.Profiler.getFunctionReport(name);
+        },
+
+        /**
+         * unregisterFunction
+         * @param  {string} name
+         * @return {void}
+         */
+        unregisterFunction: function (name) {
+            YAHOO.tool.Profiler.unregisterFunction(name);
+        },
+
+        /**
          * plot
          * @param  {object} data
          * @param  {string} type
