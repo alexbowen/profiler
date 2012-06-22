@@ -54,8 +54,8 @@
         dbVersion: null,
         emptyFunc : function(){},
         error : {
-            'version'       : function(error){ console.error('Failed to set version.', error); },
-            'deleteStore'   : function(error){ console.error('Failed to delete objectStore.', error); },
+            'version'       : function(error) { console.error('Failed to set version.', error); },
+            'deleteStore'   : function(error) { console.error('Failed to delete objectStore.', error); },
             'write'         : function(error) { console.error('Could not write data.', error); },
             'read'          : function(error) { console.error('Could not read data.', error); },
             'remove'        : function(error) { console.error('Could not remove data.', error); },
@@ -480,7 +480,7 @@
 
     /* PUBLIC API ACCESSOR METHODS - EVERY THING ELSE IN HERE IS INVISIBLE */
     return {
-        'openDB'    : function(options, onStoreReady) { database.openDB(options, onStoreReady); },
+        'openDB'    : function(options, onReady) { database.openDB(options, onReady); },
         'put'       : function (data, onSuccess, onError) { database.put(data, onSuccess, onError); },
         'get'       : function (key, onSuccess, onError) { database.get(key, onSuccess, onError); },
         'remove'    : function (key, onSuccess, onError) { database.remove(key, onSuccess, onError); },
