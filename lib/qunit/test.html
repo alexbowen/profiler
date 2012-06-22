@@ -2,12 +2,20 @@
       "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <head>
+    <title>Profiler Qunit tests</title>
     <link rel="stylesheet" href="qunit.css" type="text/css"/>
     <script src="http://code.jquery.com/jquery-latest.js"> </script>
     <script type="text/javascript" src="qunit.js"></script>
     <script type="text/javascript" src="../require/require.js"></script>
-        <script type="text/javascript" src="../../models/api/indexedDb.js"></script>
-
+    <script type="text/javascript" src="../../lib/framework/utils.js"></script>
+    <script type="text/javascript" src="../../interfaces/database.js"></script>
+    <script type="text/javascript" src="../../models/api/indexedDb.js"></script>
+    <script type="text/javascript" src="../../tests/models/api/indexedDbTest.js"></script>
+    <script type="text/javascript">
+        require(['tests/models/api/indexedDbTest'], function () {
+            info('Running tests...');
+        });
+    </script>
   </head>
   <body>
     <h1 id="qunit-header">QUnit example</h1>
