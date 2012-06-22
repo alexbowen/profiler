@@ -7,13 +7,15 @@
     <script src="http://code.jquery.com/jquery-latest.js"> </script>
     <script type="text/javascript" src="qunit.js"></script>
     <script type="text/javascript" src="../require/require.js"></script>
-    <script type="text/javascript" src="../../lib/framework/utils.js"></script>
-    <script type="text/javascript" src="../../interfaces/database.js"></script>
-    <script type="text/javascript" src="../../models/api/indexedDb.js"></script>
-    <script type="text/javascript" src="../../tests/models/api/indexedDbTest.js"></script>
-    <script type="text/javascript" src="../../models/api/sqlDb.js"></script>
-    <script type="text/javascript" src="../../tests/models/api/sqlDbTest.js"></script>
     <script type="text/javascript">
+        require.config({
+            baseUrl: "file:///Users/bowena02/Sites/profiler",
+            paths: {
+                "some": "some/v1.0"
+            },
+            waitSeconds: 5
+        });
+
         require([
             'tests/models/api/sqlDbTest',
             'tests/models/api/indexedDbTest'

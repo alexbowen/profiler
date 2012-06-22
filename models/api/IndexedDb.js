@@ -1,9 +1,10 @@
 /**
  * @return module:profiler/models/api/indexedDb
  */
- define('profiler/models/api/indexedDb', [
+ define('models/api/indexedDb', [
+    'models/Database',
     'lib/framework/utils'
-], function () {
+], function (Database) {
 
     /**
      * indexedDb
@@ -12,40 +13,40 @@
      * @param  {function} onStoreReady callback for db ready
      * @return {void}
      */
-    var indexedDbModel = function() {
+    var indexedDbModel = Database.extend({
 
-        /**
-         * normalizeConstants
-         * merges the properties of two objects
-         * @param  {object} object
-         * @param  {object} constants
-         * @return {void}
-         */
-        var normalizeConstants = function(object, constants) {
-            for (var prop in constants) {
-                if (!(prop in object)) {
-                    object[prop] = constants[prop];
+        init: function () {
+            /**
+             * normalizeConstants
+             * merges the properties of two objects
+             * @param  {object} object
+             * @param  {object} constants
+             * @return {void}
+             */
+            var normalizeConstants = function(object, constants) {
+                for (var prop in constants) {
+                    if (!(prop in object)) {
+                        object[prop] = constants[prop];
+                    }
                 }
-            }
-        };
+            };
 
-        this.consts = window.IDBTransaction || window.webkitIDBTransaction;
-        normalizeConstants(this.consts, {
-            'READ_ONLY'        : 'readonly',
-            'READ_WRITE'    : 'readwrite',
-            'VERSION_CHANGE': 'versionchange'
-        });
+            this.consts = window.IDBTransaction || window.webkitIDBTransaction;
+            normalizeConstants(this.consts, {
+                'READ_ONLY'        : 'readonly',
+                'READ_WRITE'    : 'readwrite',
+                'VERSION_CHANGE': 'versionchange'
+            });
 
-        this.cursor = window.IDBCursor || window.webkitIDBCursor;
-        normalizeConstants(this.cursor, {
-            'NEXT'                : 'next',
-            'NEXT_NO_DUPLICATE'    : 'nextunique',
-            'PREV'                : 'prev',
-            'PREV_NO_DUPLICATE'    : 'prevunique'
-        });
-    };
+            this.cursor = window.IDBCursor || window.webkitIDBCursor;
+            normalizeConstants(this.cursor, {
+                'NEXT'                : 'next',
+                'NEXT_NO_DUPLICATE'    : 'nextunique',
+                'PREV'                : 'prev',
+                'PREV_NO_DUPLICATE'    : 'prevunique'
+            });
+        },
 
-    indexedDbModel.prototype = {
         consts: window.IDBTransaction || window.webkitIDBTransaction,
         cursor: window.IDBCursor || window.webkitIDBCursor,
         db: null,
@@ -83,6 +84,7 @@
          * @return {void}
          */
         update : function(target, source) {
+                        this._super();
             var name, s, empty = {};
             for(name in source){
                 s = source[name];
@@ -461,7 +463,7 @@
                 }
             };
         }
-    };
+    });
 
     var indexedDb = indexedDbModel;
 

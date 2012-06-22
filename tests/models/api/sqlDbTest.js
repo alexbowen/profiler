@@ -1,5 +1,5 @@
 define('tests/models/api/sqlDbTest', [
-    'profiler/models/api/sqlDb',
+    'models/api/sqlDb',
     'interfaces/database',
     'lib/framework/utils'
 ], function (sqlDb, databaseInterface, utils) {

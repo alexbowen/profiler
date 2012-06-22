@@ -1,5 +1,5 @@
 define('tests/models/api/indexedDbTest', [
-    'profiler/models/api/indexedDb',
+    'models/api/indexedDb',
     'interfaces/database',
     'lib/framework/utils'
 ], function (indexedDb, databaseInterface, utils) {

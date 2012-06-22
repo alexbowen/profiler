@@ -1,4 +1,4 @@
-define('profiler/controllers/component/profiling', [
+define('controllers/component/profiling', [
     'jquery-1',
     'js-signals',
     'profiler/controllers/base',

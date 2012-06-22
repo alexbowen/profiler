@@ -1,12 +1,14 @@
-define('profiler/models/api/sqlDb', function () {
+define('models/api/sqlDb', [
+    'models/Database'
+], function (Database) {
 
-    var sqlDbModel = function () {
-        this.db = null;
-        this.created = false;
-        this.schemaRegistry = [];
-    };
+    sqlDbModel = Database.extend({
 
-    sqlDbModel.prototype = {
+        init: function () {
+            this.db = null;
+            this.created = false;
+            this.schemaRegistry = [];
+        },
 
         /**
          * update
@@ -278,7 +280,7 @@ define('profiler/models/api/sqlDb', function () {
                 log('table function deleted');
             });
         }
-    };
+    });
 
     var sqlDb = sqlDbModel;
 
