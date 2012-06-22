@@ -19,8 +19,8 @@
 
     <!-- Front End MetaData -->
     <em:name>profiler</em:name>
-    <em:description>A test extension</em:description>
-    <em:creator>Your Name Here</em:creator>
+    <em:description>Javascript profiler with historical data using HTML5 api</em:description>
+    <em:creator>Alex Bowen</em:creator>
     <em:homepageURL>http://www.example.com/</em:homepageURL>
   </Description>
 </RDF>
