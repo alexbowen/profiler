@@ -1,7 +1,9 @@
 /**
  * @return module:profiler/models/api/indexedDb
  */
- define('profiler/models/api/indexedDb', function () {
+ define('profiler/models/api/indexedDb', [
+    'lib/framework/utils'
+], function () {
 
     /**
      * indexedDb
@@ -10,7 +12,7 @@
      * @param  {function} onStoreReady callback for db ready
      * @return {void}
      */
-    var indexedDbModel = function(options, onStoreReady) {
+    var indexedDbModel = function() {
 
         /**
          * normalizeConstants
@@ -27,10 +29,6 @@
             }
         };
 
-        this.update(this, options);
-
-        this.onStoreReady = onStoreReady;
-
         this.consts = window.IDBTransaction || window.webkitIDBTransaction;
         normalizeConstants(this.consts, {
             'READ_ONLY'        : 'readonly',
@@ -45,8 +43,6 @@
             'PREV'                : 'prev',
             'PREV_NO_DUPLICATE'    : 'prevunique'
         });
-
-        this.openDB();
     };
 
     indexedDbModel.prototype = {
@@ -117,9 +113,11 @@
                 return func.apply(scope, arguments || []);
             };
         },
-        openDB: function() {
+        openDB: function(options, onStoreReady) {
 
             var that = this, features = this.features = {}, openRequest;
+
+            this.update(this, options);
 
             // need to check for FF10, which implements the new setVersion API
             this.newVersionAPI = !!(window.IDBFactory && IDBFactory.prototype.deleteDatabase);
@@ -140,7 +138,7 @@
                 } else if ('errorCode' in error.target) {
                     gotVersionErr = error.target.errorCode === 12;
                 }
-                if (gotVersionErr){
+                if (gotVersionErr) {
                     this.dbVersion++;
                     setTimeout(that.execute(that, 'openDB'));
                 } else {
@@ -156,13 +154,13 @@
                 };
                 if (this.newVersionAPI){
                     this.getObjectStore(that.execute(this, function(){
-                            setTimeout(this.onStoreReady);
+                            setTimeout(onStoreReady);
                         })
                     );
                 } else {
                     this.checkVersion(that.execute(this, function(){
                         this.getObjectStore(that.execute(this, function(){
-                            setTimeout(this.onStoreReady);
+                            setTimeout(onStoreReady);
                         }));
                     }));
                 }
@@ -219,6 +217,7 @@
         createNewObjectStore: function(onSuccess, onError) {
             this.enterMutationState(this.execute(this, function(){
                 this.store = this.db.createObjectStore(this.storeName, { keyPath: this.keyPath, autoIncrement: this.autoIncrement});
+                log('sdf', this.store);
                 onSuccess(this.store);
             }), onError);
         },
@@ -428,13 +427,13 @@
             callback = callback ? callback : this.emptyFunc;
 
             options = this.update({
-                'index'            : null,
-                'order'            : 'ASC',
-                'filterDupes'    : false,
-                'keyRange'        : null,
-                'writeAccess'    : false,
-                'onEnd'            : null,
-                'onError'        : this.error.cursor
+                'index'         : null,
+                'order'         : 'ASC',
+                'filterDupes'   : false,
+                'keyRange'      : null,
+                'writeAccess'   : false,
+                'onEnd'         : null,
+                'onError'       : this.error.cursor
             }, options || {});
 
             directionType = options.order.toLowerCase() === 'desc' ? 'PREV' : 'NEXT';
@@ -471,13 +470,7 @@
     //Ensures we always use the same instance of the object
     indexedDb.getInstance = function () {
         if (indexedDb.instance === null) {
-            indexedDb.instance = new indexedDbModel({
-                'dbName'        : 'IDB',
-                'storeName'     : 'Store',
-                'dbVersion'     : 1,
-                'keyPath'       : 'id',
-                'autoIncrement' : true
-            });
+            indexedDb.instance = new indexedDbModel();
         }
 
         return indexedDb.instance;
@@ -487,6 +480,7 @@
 
     /* PUBLIC API ACCESSOR METHODS - EVERY THING ELSE IN HERE IS INVISIBLE */
     return {
+        'openDB'    : function(options, onStoreReady) { database.openDB(options, onStoreReady); },
         'put'       : function (data, onSuccess, onError) { database.put(data, onSuccess, onError); },
         'get'       : function (key, onSuccess, onError) { database.get(key, onSuccess, onError); },
         'remove'    : function (key, onSuccess, onError) { database.remove(key, onSuccess, onError); },
@@ -494,12 +488,4 @@
         'clear'     : function (onSuccess, onError) { database.clear(onSuccess, onError); },
         'iterate'   : function (callback, options) { database.iterate(callback, options); }
     };
-
-});
-
-require(['profiler/models/api/indexedDb'], function(indexedDb) {
-    setTimeout(function () {
-        indexedDb.put({'test' : 'dataObj'}, indexedDb.getAll(alert));
-        indexedDb.openDB(); //this should fail
-    }, 2000);
 });
