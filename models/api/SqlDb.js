@@ -1,27 +1,50 @@
-require.def('profiler/models/api/Database', function () {
+define('profiler/models/api/sqlDb', function () {
 
-    /**
-     * @exports profiler/models/api/Database
-     * @requires jquery-1
-     */
-    var Database = function (options) {
-
+    var sqlDbModel = function () {
         this.db = null;
         this.created = false;
         this.schemaRegistry = [];
-
-        this.options = options;
-
-        this.db = openDatabase(
-            this.options.name,
-            '1.0',
-            this.options.name,
-            this.options.size * 1024 * 1024
-        );
     };
 
+    sqlDbModel.prototype = {
 
-    Database.prototype = {
+        /**
+         * update
+         * copys properties from one object to another
+         * but not overwriting if it already exists.
+         * @param  {object} target
+         * @param  {object} source
+         * @return {void}
+         */
+        update : function(target, source) {
+            var name, s, empty = {};
+            for(name in source){
+                s = source[name];
+                if (s !== empty[name] && s !== target[name]){
+                    target[name] = s;
+                }
+            }
+            return target;
+        },
+
+        /**
+         * openDB
+         * @param  {object} options
+         * @param  {function} onReady callback
+         * @return {void}
+         */
+        openDB : function (options, onReady) {
+
+            this.update(options, options);
+
+            this.db = openDatabase(
+                options.name,
+                '1.0',
+                options.name,
+                options.size * 1024 * 1024,
+                onReady
+            );
+        },
 
         /**
          * setTable
@@ -160,20 +183,23 @@ require.def('profiler/models/api/Database', function () {
             this.query(sql, callback);
         },
 
+        getAll : function (onSuccess, onError) {},
+        deleteDatabase : function () {},
+
         /**
         * wrapper for sql DELETE
         * @param where array
         * @param callback function to be executed
         * @return {void}
         */
-        remove: function (where, callback) {
+        remove: function (key, onSuccess, onError) {
 
             var sql, whereString;
 
-            whereString = this.parseWhereArray(where);
+            whereString = this.parseWhereArray(key);
             sql = "DELETE FROM " + this.currentTable + whereString;
 
-            this.query(sql, callback);
+            this.query(sql, onSuccess);
         },
 
         /**
@@ -247,12 +273,35 @@ require.def('profiler/models/api/Database', function () {
          * drop
          * @return {void}
          */
-        clear: function () {
+        clear: function (onSuccess, onError) {
             this.query("DELETE FROM function;", function () {
                 log('table function deleted');
             });
         }
     };
 
-    return Database;
+    var sqlDb = sqlDbModel;
+
+    sqlDb.instance = null;
+
+    //Ensures we always use the same instance of the object
+    sqlDb.getInstance = function () {
+        if (sqlDb.instance === null) {
+            sqlDb.instance = new sqlDbModel();
+        }
+
+        return sqlDb.instance;
+    };
+
+    var database = sqlDb.getInstance();
+
+    /* PUBLIC API ACCESSOR METHODS - EVERY THING ELSE IN HERE IS INVISIBLE */
+    return {
+        'openDB'    : function(options, onReady) { database.openDB(options, onReady); },
+        'put'       : function (data, onSuccess, onError) { database.put(data, onSuccess, onError); },
+        'get'       : function (key, onSuccess, onError) { database.get(key, onSuccess, onError); },
+        'remove'    : function (key, onSuccess, onError) { database.remove(key, onSuccess, onError); },
+        'getAll'    : function (onSuccess, onError) { database.getAll(onSuccess, onError); },
+        'clear'     : function (onSuccess, onError) { database.clear(onSuccess, onError); }
+    };
 });

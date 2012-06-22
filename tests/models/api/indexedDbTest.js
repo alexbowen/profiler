@@ -9,7 +9,7 @@ define('tests/models/api/indexedDbTest', [
     function startTests() {
 
         test('implements', function () {
-            equal(utils.implement(indexedDb, databaseInterface), true, 'database implements the interface');
+            equal(utils.implement(indexedDb, databaseInterface), true, 'indexedDb implements the database interface');
         });
 
         asyncTest('put & get & remove', function () {
@@ -77,5 +77,5 @@ define('tests/models/api/indexedDbTest', [
         'dbVersion'     : 1,
         'keyPath'       : 'id',
         'autoIncrement' : true
-    }, startTests());
+    }, startTests);
 });

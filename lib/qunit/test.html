@@ -11,14 +11,19 @@
     <script type="text/javascript" src="../../interfaces/database.js"></script>
     <script type="text/javascript" src="../../models/api/indexedDb.js"></script>
     <script type="text/javascript" src="../../tests/models/api/indexedDbTest.js"></script>
+    <script type="text/javascript" src="../../models/api/sqlDb.js"></script>
+    <script type="text/javascript" src="../../tests/models/api/sqlDbTest.js"></script>
     <script type="text/javascript">
-        require(['tests/models/api/indexedDbTest'], function () {
+        require([
+            'tests/models/api/sqlDbTest',
+            'tests/models/api/indexedDbTest'
+        ], function () {
             info('Running tests...');
         });
     </script>
   </head>
   <body>
-    <h1 id="qunit-header">QUnit example</h1>
+    <h1 id="qunit-header">Profiler QUnit test suite</h1>
     <h2 id="qunit-banner"></h2>
     <h2 id="qunit-userAgent"></h2>
     <ol id="qunit-tests">

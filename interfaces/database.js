@@ -5,7 +5,6 @@ define('interfaces/database', function () {
         'remove'    : function (key, onSuccess, onError) {},
         'clear'     : function (onSuccess, onError) {},
         'openDB'    : function (options, onStoreReady) {},
-        'getAll'    : function (onSuccess, onError) {},
-        'iterate'   : function (callback, options) {}
+        'getAll'    : function (onSuccess, onError) {}
     };
 });
